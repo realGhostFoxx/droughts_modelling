@@ -8,7 +8,7 @@ class DataFunctions:
     def train_last_2_years(self):
     
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-        full_path = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
+        full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
     
         big_df = pd.read_csv(full_path)
         big_df['date'] = pd.to_datetime(big_df['date'])
@@ -21,7 +21,7 @@ class DataFunctions:
     def weekly_aggregate(self):
     
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-        full_path = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
+        full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
         data = pd.read_csv(full_path)[2:]
     
         #first create new features: year, month, weekday, weeknum
