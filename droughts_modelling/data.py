@@ -12,3 +12,17 @@ def train_last_2_years():
     temp_df = big_df[big_df['date'] >= '2015-01-01']
     
     return temp_df
+
+def weekly_data(data,aggregate=True):
+    weeks = range(0,len(data)+1,7)
+    data = data[2:]
+    
+    if aggregate:
+        for week in weeks:
+            for col in data.drop(columns=['fips','date','score']).columns:
+                data[week:week+7][col] = data[week:week+7][col].mean()
+                
+        return data.dropna()
+    
+    else:
+        return data.dropna()
