@@ -35,7 +35,7 @@ class DataFunctions:
 
         #then start aggregating by fips, year, month, week_num
         aggregated_data_train = data.groupby(['fips', 'year', 
-                                        'month', 'week_num']).agg(
+                                        'week_num']).agg(
                                         {'PRECTOT': ['min', 'mean', 'std'],
                                         'PS': ['min', 'mean', 'std'],
                                         'QV2M': ['min', 'mean', 'std'],
