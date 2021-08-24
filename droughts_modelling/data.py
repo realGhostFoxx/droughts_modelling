@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import numpy as np
 import datetime as dt
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.tree import DecisionTreeClassifier
 
 class DataFunctions:
     
@@ -59,7 +61,8 @@ class DataFunctions:
         #Then round scores to nearest integer
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
-        return aggregated_data_train
+        
+        return aggregated_data_train.dropna()
     
     def light_weekly_aggregate(self):
     
@@ -103,5 +106,29 @@ class DataFunctions:
         #Then round scores to nearest integer
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
-        return aggregated_data_train
+        
+        return aggregated_data_train.dropna()
+    
+    def k_best_features(self):
+        df = light_weekly_aggregate()
+    
+        y = round(df['score_max'])
+        X = df.drop(columns=['fips_', 'year_', 'week_num_', 'score_max'])
+        
+        k_best_f = SelectKBest(f_classif, k=10).fit(X, y)
+        df_scores = pd.DataFrame({'features': X.columns, 'ANOVA F-value': k_best_f.scores_, 'pValue': k_best_f.pvalues_ })
+
+        return df_scores.sort_values('ANOVA F-value', ascending=False).reset_index()
+    
+    def tree_feature_importance(self):
+        df = light_weekly_aggregate()
+    
+        y = round(df['score_max'])
+        X = df.drop(columns=['fips_', 'year_', 'week_num_', 'score_max'])
+        
+        tree_clf = DecisionTreeClassifier(max_depth=6, random_state=2)
+        tree_clf.fit(X,y)
+
+        return pd.DataFrame({'features': X.columns, 'Feature Importance': tree_clf.feature_importances_})\
+            .sort_values('Feature Importance', ascending=False).iloc[:20]
 
