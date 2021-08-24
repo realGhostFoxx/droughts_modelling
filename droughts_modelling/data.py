@@ -103,5 +103,5 @@ class DataFunctions:
         #Then round scores to nearest integer
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
-        return aggregated_data_train
+        return aggregated_data_train.dropna()
 
