@@ -110,7 +110,7 @@ class DataFunctions:
         return aggregated_data_train.dropna()
     
     def k_best_features(self):
-        df = DataFunctions.light_weekly_aggregate(self)
+        df = self.light_weekly_aggregate()
     
         y = round(df['score_max'])
         X = df.drop(columns=['fips_', 'year_', 'week_num_', 'score_max'])
@@ -121,7 +121,7 @@ class DataFunctions:
         return df_scores.sort_values('ANOVA F-value', ascending=False).reset_index()
     
     def tree_feature_importance(self):
-        df = DataFunctions().light_weekly_aggregate(self)
+        df = self.light_weekly_aggregate()
     
         y = round(df['score_max'])
         X = df.drop(columns=['fips_', 'year_', 'week_num_', 'score_max'])
