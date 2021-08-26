@@ -7,35 +7,30 @@ from sklearn.tree import DecisionTreeClassifier
 
 class DataFunctions:
     
-    def train_last_2_years(self):
-    
+    def __init__(self):
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
         full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
+        self.data = pd.read_csv(full_path)[2:]
     
-        big_df = pd.read_csv(full_path)
-        big_df['date'] = pd.to_datetime(big_df['date'])
-    
-        temp_df = big_df[big_df['date'] >= '2015-01-01']
+    def train_last_2_years(self):
+        df = self.data
+        df['date'] = pd.to_datetime(df['date'])
+        temp_df = df[df['date'] >= '2015-01-01']
     
         return temp_df
 
     def weekly_aggregate(self):
-    
-        file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-        full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
-        data = pd.read_csv(full_path)[2:]
-    
+        df = self.data
+        
         #first create new features: year, month, weekday, weeknum
-        data['week_num'] = pd.to_datetime(data['date']).dt.isocalendar().week
-        data['weekday'] = pd.to_datetime(data['date']).dt.weekday+1
-        data['month'] = pd.to_datetime(data['date']).dt.month_name()
-        data['year'] = pd.to_datetime(data['date']).dt.isocalendar().year
+        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
+        df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
 
         #then encode the score as a new feature - not sure if we'll need it 
-        data['score_day'] = data['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
+        df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
         #then start aggregating by fips, year, month, week_num
-        aggregated_data_train = data.groupby(['fips', 'year', 
+        aggregated_data_train = df.groupby(['fips', 'year', 
                                         'week_num']).agg(
                                         {'PRECTOT': ['min', 'mean', 'std'],
                                         'PS': ['min', 'mean', 'std'],
@@ -65,22 +60,16 @@ class DataFunctions:
         return aggregated_data_train.dropna()
     
     def light_weekly_aggregate(self):
-    
-        file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-        full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
-        data = pd.read_csv(full_path)[2:]
-    
+        df = self.data
         #first create new features: year, month, weekday, weeknum
-        data['week_num'] = pd.to_datetime(data['date']).dt.isocalendar().week
-        data['weekday'] = pd.to_datetime(data['date']).dt.weekday+1
-        data['month'] = pd.to_datetime(data['date']).dt.month_name()
-        data['year'] = pd.to_datetime(data['date']).dt.isocalendar().year
+        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
+        df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
 
         #then encode the score as a new feature - not sure if we'll need it 
-        data['score_day'] = data['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
+        df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
         #then start aggregating by fips, year, month, week_num
-        aggregated_data_train = data.groupby(['fips', 'year', 
+        aggregated_data_train = df.groupby(['fips', 'year', 
                                         'week_num']).agg(
                                         {'PRECTOT': ['mean'],
                                         'PS': ['mean'],
