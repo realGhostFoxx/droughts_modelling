@@ -53,3 +53,60 @@ pypi_test:
 
 pypi:
 	@twine upload dist/* -u $(PYPI_USERNAME)
+
+# ----------------------------------
+#      			GCP
+# ----------------------------------
+PROJECT_ID=droughts-modelling
+
+BUCKET_NAME=wagon-data-602-lupson
+
+REGION=europe-west2
+
+set_project:
+	@gcloud config set project ${PROJECT_ID}
+
+create_bucket:
+	@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}
+
+LOCAL_PATH=/Users/hughlupson/code/realGhostFoxx/droughts_modelling/raw_data/train_timeseries.csv
+
+# bucket directory in which to store the uploaded file (`data` is an arbitrary name that we choose to use)
+BUCKET_FOLDER=data
+
+# name for the uploaded file inside of the bucket (we choose not to rename the file that we upload)
+BUCKET_FILE_NAME=$(shell basename ${LOCAL_PATH})
+
+upload_data:
+    # @gsutil cp train_1k.csv gs://wagon-ml-my-bucket-name/data/train_1k.csv
+	@gsutil cp ${LOCAL_PATH} gs://${BUCKET_NAME}/${BUCKET_FOLDER}/${BUCKET_FILE_NAME}
+
+# ----------------------------------
+#   Running locally and on cloud
+# ----------------------------------
+
+run_locally:
+	@python -m droughts_modelling.DL_trainer
+
+#Variables for cloud training command
+
+BUCKET_NAME=wagon-data-602-lupson
+BUCKET_TRAINING_FOLDER ='trainings'
+REGION=europe-west2
+PYTHON_VERSION=3.7
+FRAMEWORK=tensorflow
+RUNTIME_VERSION=1.15
+PACKAGE_NAME=droughts_modelling
+FILENAME=DL_trainer
+JOB_NAME=droughts_modelling_training$(shell date +'%Y%m%d_%H%M%S')
+
+
+gcp_submit_training:
+	gcloud ai-platform jobs submit training ${JOB_NAME} \
+		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
+		--package-path ${PACKAGE_NAME} \
+		--module-name ${PACKAGE_NAME}.${FILENAME} \
+		--python-version=${PYTHON_VERSION} \
+		--runtime-version=${RUNTIME_VERSION} \
+		--region ${REGION} \
+		--stream-logs
