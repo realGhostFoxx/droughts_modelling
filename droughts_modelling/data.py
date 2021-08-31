@@ -120,5 +120,22 @@ class DataFunctions:
 
         return pd.DataFrame({'features': X.columns, 'Feature Importance': tree_clf.feature_importances_})\
             .sort_values('Feature Importance', ascending=False).iloc[:20]
-
+            
+    def return_lagged_function(self, weeks_back=5):
+        
+        df = self.light_weekly_aggregate()
+        
+        top_features = ['T2M_RANGE_mean', 'PS_mean', 'T2M_MAX_mean', 'TS_mean', 
+                        'T2MDEW_mean', 'QV2M_mean', 'WS10M_MAX_mean', 'PRECTOT_mean']
+        
+        all_features = [i for i in df.columns if i in top_features or i in ['fips_', 'year_', 'week_num_']]
+        
+        df_processed = df[all_features]
+        
+        for e in top_features:
+            for i in range(1, weeks_back):
+                df_processed[f'{e} - {i}'] = df_processed.groupby(['fips_'])[f'{e}'].shift(i)
+                
+    
+       return df_processed 
 
