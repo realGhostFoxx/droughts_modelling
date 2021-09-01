@@ -23,13 +23,14 @@ class DataFunctions:
         df = self.data
         
         #first create new features: month, weekday, weeknum
+        df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
         df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
-    
+        
         #then encode the score as a new feature - not sure if we'll need it 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
         #then start aggregating by fips, month, week_num
-        aggregated_data_train = df.groupby(['fips','week_num']).agg(
+        aggregated_data_train = df.groupby(['fips','year','week_num']).agg(
                                         {'PRECTOT': ['min', 'mean', 'std'],
                                         'PS': ['min', 'mean', 'std'],
                                         'QV2M': ['min', 'mean', 'std'],
@@ -48,7 +49,7 @@ class DataFunctions:
                                          'WS50M_MAX': ['min', 'mean', 'std'],
                                          'WS50M_MIN': ['min', 'mean', 'std'],
                                          'WS50M_RANGE': ['min', 'mean', 'std'],
-                                         'score': 'max'}).reset_index().sort_values(['fips','week_num'])
+                                         'score': 'max'}).reset_index().sort_values(['fips','year','week_num'])
 
         #finally, remove the multiindex from aggregated data_train so it looks neat and has flat column name structure
         #Then round scores to nearest integer
@@ -60,13 +61,14 @@ class DataFunctions:
     def light_weekly_aggregate(self):
         df = self.data
         #first create new features: month, weekday, weeknum
+        df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
         df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
 
         #then encode the score as a new feature - not sure if we'll need it 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
         #then start aggregating by fips, month, week_num
-        aggregated_data_train = df.groupby(['fips','week_num']).agg(
+        aggregated_data_train = df.groupby(['fips','year','week_num']).agg(
                                         {'PRECTOT': ['mean'],
                                         'PS': ['mean'],
                                         'QV2M': ['mean'],
@@ -85,7 +87,7 @@ class DataFunctions:
                                          'WS50M_MAX': ['mean'],
                                          'WS50M_MIN': ['mean'],
                                          'WS50M_RANGE': ['mean'],
-                                         'score': 'max'}).reset_index().sort_values(['fips','week_num'])
+                                         'score': 'max'}).reset_index().sort_values(['fips','year','week_num'])
 
         #finally, remove the multiindex from aggregated data_train so it looks neat and has flat column name structure
         #Then round scores to nearest integer
