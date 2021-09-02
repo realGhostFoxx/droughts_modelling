@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import datetime as dt
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -9,6 +10,7 @@ class DataFunctions:
     
     def __init__(self):
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
+
         full_path_train = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
         full_path_validate = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'validation_timeseries.csv')
         full_path_test = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'test_timeseries.csv')
@@ -66,6 +68,10 @@ class DataFunctions:
         df = self.train_data
         #first create new features: month, weekday, weeknum
         df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
+        #first create new features: year, month, weekday, weeknum
+
+        #first create new features: month, weekday, weeknum
+
         df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
 
         #then encode the score as a new feature - not sure if we'll need it 
@@ -98,6 +104,12 @@ class DataFunctions:
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
 
+        fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
+        fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
+        fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        fips_dict.drop(columns=["lat_long"],inplace=True)
+        
+        aggregated_data_train = pd.merge(aggregated_data_train,fips_dict, on=["fips"], how="inner")
         return aggregated_data_train.dropna()
     
     def light_weekly_aggregate_validate(self):
@@ -199,5 +211,22 @@ class DataFunctions:
 
         return pd.DataFrame({'features': X.columns, 'Feature Importance': tree_clf.feature_importances_})\
             .sort_values('Feature Importance', ascending=False).iloc[:20]
-
+            
+    def return_lagged_function(self, weeks_back=5):
+        
+        df = self.light_weekly_aggregate()
+        
+        top_features = ['T2M_RANGE_mean', 'PS_mean', 'T2M_MAX_mean', 'TS_mean', 
+                        'T2MDEW_mean', 'QV2M_mean', 'WS10M_MAX_mean', 'PRECTOT_mean']
+        
+        all_features = [i for i in df.columns if i in top_features or i in ['fips_', 'year_', 'week_num_']]
+        
+        df_processed = df[all_features]
+        
+        for e in top_features:
+            for i in range(1, weeks_back):
+                df_processed[f'{e} - {i}'] = df_processed.groupby(['fips_'])[f'{e}'].shift(i)
+                
+    
+       return df_processed 
 
