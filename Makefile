@@ -57,9 +57,9 @@ pypi:
 # ----------------------------------
 #      			GCP
 # ----------------------------------
-PROJECT_ID=droughts-modelling
+PROJECT_ID=festive-almanac-324614
 
-BUCKET_NAME=wagon-data-602-lupson
+BUCKET_NAME=training-iterations
 
 REGION=europe-west2
 
@@ -69,7 +69,9 @@ set_project:
 create_bucket:
 	@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}
 
-LOCAL_PATH=/Users/hughlupson/code/realGhostFoxx/droughts_modelling/raw_data/train_timeseries.csv
+file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
+full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
+LOCAL_PATH=full_path
 
 # bucket directory in which to store the uploaded file (`data` is an arbitrary name that we choose to use)
 BUCKET_FOLDER=data
@@ -90,8 +92,8 @@ run_locally:
 
 #Variables for cloud training command
 
-BUCKET_NAME=wagon-data-602-lupson
-BUCKET_TRAINING_FOLDER ='trainings'
+BUCKET_NAME=training-iterations
+BUCKET_TRAINING_FOLDER=models
 REGION=europe-west2
 PYTHON_VERSION=3.7
 FRAMEWORK=tensorflow
