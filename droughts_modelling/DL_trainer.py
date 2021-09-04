@@ -1,20 +1,16 @@
-from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras import models,layers
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from droughts_modelling.data import DataFunctions
 from droughts_modelling.window_gen import WindowGenerator
 import numpy as np
-import joblib
-from google.cloud import storage
 
 class DeepLearning:
     
     def __init__(self):
-        self.data = DataFunctions().light_weekly_aggregate_train()
+        self.train_data = DataFunctions().light_weekly_aggregate_train()
         self.features = self.data.drop(columns=['fips_','year_','week_num_','score_max']).columns
         
-    def robust(self):
+    def train_robust(self):
         df = self.data.copy()
         for f in self.features:
             median = np.median(df[f])
@@ -22,7 +18,7 @@ class DeepLearning:
             df[f] = df[f].map(lambda x: (x-median)/iqr)
         
         self.scaled_data = df
-    
+        
     def ohe(self):
         self.robust()
         df = self.scaled_data.copy()
@@ -48,13 +44,6 @@ class DeepLearning:
         self.initialize_model()
         self.preprocess()
         self.model.fit(self.preprocessed_data,epochs=1000,batch_size=32,verbose=1)
-        
-    #def create_pipe(self):
-        #df = self.data
-        #preproc = Pipeline([(RobustScaler(),df.drop(columns=['fips_','year_','week_num_','score_max']).columns)])
-        #model = KerasClassifier(self.initialize_model,epochs=1000, batch_size=16, verbose=0)
-        #pipe = Pipeline([(preproc,model)])
-        #return pipe
     
         
         
