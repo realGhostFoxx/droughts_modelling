@@ -92,7 +92,7 @@ run_locally:
 
 #Variables for cloud training command
 
-BUCKET_NAME=drought-modelling-datasets
+BUCKET_NAME=drought-modelling-models
 BUCKET_TRAINING_FOLDER=models
 REGION=europe-west2
 PYTHON_VERSION=3.7
