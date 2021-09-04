@@ -57,9 +57,9 @@ pypi:
 # ----------------------------------
 #      			GCP
 # ----------------------------------
-PROJECT_ID=festive-almanac-324614
+PROJECT_ID=droughts-modelling
 
-BUCKET_NAME=training-iterations
+BUCKET_NAME=drought-modelling-datasets
 
 REGION=europe-west2
 
@@ -69,12 +69,12 @@ set_project:
 create_bucket:
 	@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}
 
-file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-full_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
-LOCAL_PATH=full_path
+full_path = os.path.join(os.path.dirname(os.getcwd()), 'raw_data')
+LOCAL_PATH='raw_data/fips_dict.csv'
 
 # bucket directory in which to store the uploaded file (`data` is an arbitrary name that we choose to use)
 BUCKET_FOLDER=data
+BUCKET_FILE_NAME='fips_dict.csv'
 
 # name for the uploaded file inside of the bucket (we choose not to rename the file that we upload)
 BUCKET_FILE_NAME=$(shell basename ${LOCAL_PATH})
@@ -92,7 +92,7 @@ run_locally:
 
 #Variables for cloud training command
 
-BUCKET_NAME=training-iterations
+BUCKET_NAME=drought-modelling-datasets
 BUCKET_TRAINING_FOLDER=models
 REGION=europe-west2
 PYTHON_VERSION=3.7
