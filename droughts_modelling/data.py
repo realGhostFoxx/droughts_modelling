@@ -1,22 +1,24 @@
 import os
 import pandas as pd
-import geopandas as gpd
 import numpy as np
 import datetime as dt
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.tree import DecisionTreeClassifier
+import ast
 
 class DataFunctions:
     
     def __init__(self):
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
-
         full_path_train = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
         full_path_validate = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'validation_timeseries.csv')
         full_path_test = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'test_timeseries.csv')
         self.train_data = pd.read_csv(full_path_train)[2:]
         self.validation_data = pd.read_csv(full_path_validate)[1:]
         self.test_data = pd.read_csv(full_path_test)[6:]
+        
+        self.fips_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'fips_dict.csv')
+        self.fips_dict = pd.read_csv(self.fips_path,index_col=[0])
     
     def train_last_2_years(self):
         df = self.train_data
@@ -104,12 +106,14 @@ class DataFunctions:
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
 
-        fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
-        fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
-        fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
-        fips_dict.drop(columns=["lat_long"],inplace=True)
-        
-        aggregated_data_train = pd.merge(aggregated_data_train,fips_dict, on=["fips"], how="inner")
+        #fips_dict = self.fips_dict
+        #fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
+        #fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
+        #fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        #fips_dict.drop(columns=["lat_long"],inplace=True)
+        #aggregated_data_train.rename(columns = {"fips_":"fips"},inplace=True)
+        #aggregated_data_train = pd.merge(aggregated_data_train,fips_dict, on=["fips"], how="inner")
+
         return aggregated_data_train.dropna()
     
     def light_weekly_aggregate_validate(self):
@@ -147,6 +151,14 @@ class DataFunctions:
         #Then round scores to nearest integer
         aggregated_data_validate.columns = ['_'.join(col) for col in aggregated_data_validate.columns.values]
         aggregated_data_validate['score_max'] = aggregated_data_validate['score_max'].map(lambda x: np.round(x))
+        
+        #fips_dict = self.fips_dict
+        #fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
+        #fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
+        #fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        #fips_dict.drop(columns=["lat_long"],inplace=True)
+        #aggregated_data_validate.rename(columns = {"fips_":"fips"},inplace=True)
+        #aggregated_data_validate = pd.merge(aggregated_data_validate,fips_dict, on=["fips"], how="inner")
 
         return aggregated_data_validate.dropna()
 
@@ -185,6 +197,14 @@ class DataFunctions:
         #Then round scores to nearest integer
         aggregated_data_test.columns = ['_'.join(col) for col in aggregated_data_test.columns.values]
         aggregated_data_test['score_max'] = aggregated_data_test['score_max'].map(lambda x: np.round(x))
+
+        #fips_dict = self.fips_dict
+        #fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
+        #fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
+        #fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        #fips_dict.drop(columns=["lat_long"],inplace=True)
+        #aggregated_data_test.rename(columns = {"fips_":"fips"},inplace=True)
+        #aggregated_data_test = pd.merge(aggregated_data_test,fips_dict, on=["fips"], how="inner")
 
         return aggregated_data_test.dropna()
 
@@ -228,5 +248,5 @@ class DataFunctions:
                 df_processed[f'{e} - {i}'] = df_processed.groupby(['fips_'])[f'{e}'].shift(i)
                 
     
-       return df_processed 
+       #return df_processed 
 
