@@ -102,7 +102,6 @@ PACKAGE_NAME=droughts_modelling
 FILENAME=DL_trainer
 JOB_NAME=droughts_modelling_training$(shell date +'%Y%m%d_%H%M%S')
 
-
 gcp_submit_training:
 	gcloud ai-platform jobs submit training ${JOB_NAME} \
 		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
