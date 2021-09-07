@@ -5,11 +5,11 @@ from droughts_modelling.data import DataFunctions
 from droughts_modelling.window_gen import WindowGenerator
 import numpy as np
 
-class DeepLearning2():
+class DeepLearning1():
     
     def __init__(self):
-        self.train_data = DataFunctions().light_weekly_aggregate_train(scope='single')
-        self.test_data = DataFunctions().light_weekly_aggregate_test(scope='single')
+        self.train_data = DataFunctions().light_weekly_aggregate_train()
+        self.test_data = DataFunctions().light_weekly_aggregate_test()
         self.features = self.train_data.drop(columns=['fips_','year_','week_num_','score_max']).columns
     
     #Data Scaling: Train and Test
@@ -24,6 +24,7 @@ class DeepLearning2():
             
         self.train_df_robust = train_df
         self.test_df_robust = test_df
+        print('robust done')
     
     #Train data preprocessing
     def train_ohe(self):
@@ -34,10 +35,21 @@ class DeepLearning2():
         scoremax_encoded = ohe.transform(df[['score_max']])
         df["score_max_0"],df["score_max_1"],df['score_max_2'],df['score_max_3'],df['score_max_4'],df['score_max_5'] = scoremax_encoded.T 
         self.train_df_robust_ohe = df.drop(columns=['score_max'])
+        print('train_ohe_done')
         
     def train_window(self):
         self.train_ohe()
-        self.train_windowed_data = WindowGenerator(self.train_df_robust_ohe,input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+        df = self.train_df_robust_ohe
+        
+        window = WindowGenerator(df[df['fips_'] == 1001],input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+        for fips in set(df['fips_']):
+            if fips != 1001:
+                fip_df = df[df['fips_'] == fips]
+                fip_window = WindowGenerator(fip_df,input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+                window = window.concatenate(fip_window)
+        
+        self.train_metawindow = window
+        print('train_window_done')
     
     #Test data preprocessing
     def test_ohe(self):
@@ -48,10 +60,21 @@ class DeepLearning2():
         scoremax_encoded = ohe.transform(df[['score_max']])
         df["score_max_0"],df["score_max_1"],df['score_max_2'],df['score_max_3'],df['score_max_4'],df['score_max_5'] = scoremax_encoded.T 
         self.test_df_robust_ohe = df.drop(columns=['score_max']) 
+        print('test_ohe_done')
     
     def test_window(self):
         self.test_ohe()
-        self.test_windowed_data = WindowGenerator(self.test_df_robust_ohe,input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+        df = self.test_df_robust_ohe
+        
+        window = WindowGenerator(df[df['fips_'] == 1001],input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+        for fips in set(df['fips_']):
+            if fips != 1001:
+                fip_df = df[df['fips_'] == fips]
+                fip_window = WindowGenerator(fip_df,input_width=6,label_width=6,shift=1,label_columns=["score_max_0","score_max_1","score_max_2","score_max_3","score_max_4","score_max_5"]).make_dataset()
+                window = window.concatenate(fip_window)
+
+        self.test_metawindow = window
+        print('test_metawindow_done')
     
     #Model + evaluation
     def initialize_model(self):
@@ -65,12 +88,9 @@ class DeepLearning2():
     def train_model(self):
         self.initialize_model()
         self.train_window()
-        self.model.fit(self.train_windowed_data,epochs=1,batch_size=32,verbose=1)
+        self.model.fit(self.train_metawindow,epochs=1,batch_size=32,verbose=0)
         
     def evaluate_model(self):
         self.train_model()
         self.test_window()
-        self.model.evaluate(self.test_windowed_data,verbose=1)
-        
-    if __name__ == '__main__':
-        DeepLearning2().evaluate_model()
+        self.model.evaluate(self.test_metawindow,verbose=0)
