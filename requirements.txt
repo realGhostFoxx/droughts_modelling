@@ -10,6 +10,7 @@ pandas
 scikit-learn
 geopandas 
 tensorflow
+joblib
 
 # tests/linter
 black
