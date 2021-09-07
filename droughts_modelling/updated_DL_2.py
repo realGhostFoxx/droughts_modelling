@@ -24,7 +24,6 @@ class DeepLearning2():
             
         self.train_df_robust = train_df
         self.test_df_robust = test_df
-        print('robust done')
     
     
     #One Hot Encoding: Train and Test
@@ -48,7 +47,6 @@ class DeepLearning2():
         
         self.train_df_robust_ohe = train_df.drop(columns=['score_max'])
         self.test_df_robust_ohe = test_df.drop(columns=['score_max'])
-        print('ohe_done')
         
     #Generating Windows: Train and Test    
         
