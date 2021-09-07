@@ -99,7 +99,7 @@ PYTHON_VERSION=3.7
 FRAMEWORK=tensorflow
 RUNTIME_VERSION=1.15
 PACKAGE_NAME=droughts_modelling
-FILENAME=DL_trainer
+FILENAME=Updated_DL_trainer_single
 JOB_NAME=droughts_modelling_training$(shell date +'%Y%m%d_%H%M%S')
 
 gcp_submit_training:
