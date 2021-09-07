@@ -3,16 +3,30 @@ from tensorflow.keras import models,layers
 from sklearn.preprocessing import OneHotEncoder
 from droughts_modelling.data import DataFunctions
 from droughts_modelling.window_gen import WindowGenerator
+import joblib
 import numpy as np
 
 #This is the model that takes the correct data input
 
+BUCKET_NAME='drought-modelling-models'
+DATA_BUCKET_NAME = 'drought-modelling-datasets'
+BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
+BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+
 class DeepLearning2():
     
     def __init__(self):
-        self.train_data = DataFunctions().light_weekly_aggregate_train()
-        self.test_data = DataFunctions().light_weekly_aggregate_test()
+        self.train_data = None
+        self.test_data = None
         self.features = self.train_data.drop(columns=['fips_','year_','week_num_','score_max']).columns
+        
+    def get_data(self, local=True):
+        if local:
+            self.train_data = DataFunctions().light_weekly_aggregate_train()
+            self.test_data = DataFunctions().light_weekly_aggregate_test()
+        else:
+            self.train_data = f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}"
+            self.test_data = f"gs://{DATA_BUCKET_NAME}/{BUCKET_TEST_DATA_PATH}"
     
     #Data Scaling: Train and Test
     def robust(self):
@@ -79,7 +93,21 @@ class DeepLearning2():
         self.initialize_model()
         self.window()
         self.model.fit(self.train_metawindow,epochs=1,batch_size=32,verbose=0)
+        self.save_model_to_gcp()
         self.model.evaluate(self.test_metawindow,verbose=0)
         
+    def save_model_to_gcp(self):
+        # joblib.dump(local_model_name)
+        local_model_name = 'model.joblib'
+        joblib.dump(self.model, local_model_name)
+        print("saved model.joblib locally")
+        client = storage.Client().bucket(BUCKET_NAME)
+        storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{self.model}"
+        blob = client.blob(storage_location)
+        blob.upload_from_filename(local_model_name)
+        print('saved_gcp')
+        
 if __name__ == '__main__':
-    DeepLearning2().train_evaluate_model()
+    my_test = DeepLearning2()
+    my_test.get_data(local=False)
+    my_test.train_evaluate_model()
