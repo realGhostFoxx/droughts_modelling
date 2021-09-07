@@ -8,8 +8,8 @@ import numpy as np
 class DeepLearning2():
     
     def __init__(self):
-        self.train_data = DataFunctions().light_weekly_aggregate_train()
-        self.test_data = DataFunctions().light_weekly_aggregate_test()
+        self.train_data = DataFunctions().light_weekly_aggregate_train(scope='single')
+        self.test_data = DataFunctions().light_weekly_aggregate_test(scope='single')
         self.features = self.train_data.drop(columns=['fips_','year_','week_num_','score_max']).columns
     
     #Data Scaling: Train and Test
@@ -71,3 +71,6 @@ class DeepLearning2():
         self.train_model()
         self.test_window()
         self.model.evaluate(self.test_windowed_data,verbose=1)
+        
+if __name__ == '__main__':
+    DeepLearning2().evaluate_model()

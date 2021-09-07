@@ -88,7 +88,7 @@ upload_data:
 # ----------------------------------
 
 run_locally:
-	@python -m droughts_modelling.DL_trainer
+	@python -m droughts_modelling.updated_DL_2
 
 #Variables for cloud training command
 
