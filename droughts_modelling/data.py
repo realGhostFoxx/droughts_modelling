@@ -6,21 +6,35 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.tree import DecisionTreeClassifier
 import ast
 
-class DataFunctions:
+
+BUCKET_NAME='drought-modelling-models'
+DATA_BUCKET_NAME = 'drought-modelling-datasets'
+BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
+BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
+BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+BUCKET_FIPS_PATH = 'data/fips_dict.csv'
+
+class DataFunctions():
     
-    def __init__(self):
+    def __init__(self, local=False):
         
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
         full_path_train = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
         full_path_validate = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'validation_timeseries.csv')
         full_path_test = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'test_timeseries.csv')
+        full_path_fips = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'fips_dict.csv')
         
-        self.train_data = pd.read_csv(full_path_train)[2:]
-        self.validation_data = pd.read_csv(full_path_validate)[1:]
-        self.test_data = pd.read_csv(full_path_test)[6:]
-        
-        self.fips_path = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'fips_dict.csv')
-        self.fips_dict = pd.read_csv(self.fips_path,index_col=[0])
+        if local:
+            self.train_data = pd.read_csv(full_path_train)[2:]
+            self.validation_data = pd.read_csv(full_path_validate)[1:]
+            self.test_data = pd.read_csv(full_path_test)[6:]
+            self.fips_dict = pd.read_csv(full_path_fips,index_col=[0])
+        else:
+            self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}")
+            self.validation_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_VAL_DATA_PATH}")
+            self.test_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TEST_DATA_PATH}")
+            self.fips_dict = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_FIPS_PATH}")
+            
     
     def train_last_2_years(self):
         df = self.train_data
@@ -76,7 +90,7 @@ class DataFunctions:
             df = self.train_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
+        df['week_num'] = pd.to_datetime(df['date']).dt.week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
@@ -126,7 +140,7 @@ class DataFunctions:
             df = self.validation_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
+        df['week_num'] = pd.to_datetime(df['date']).dt.week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
@@ -176,7 +190,7 @@ class DataFunctions:
             df = self.test_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
+        df['week_num'] = pd.to_datetime(df['date']).dt.week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 

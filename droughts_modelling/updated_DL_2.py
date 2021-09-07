@@ -5,28 +5,18 @@ from droughts_modelling.data import DataFunctions
 from droughts_modelling.window_gen import WindowGenerator
 import joblib
 import numpy as np
+import pandas as pd
 
 #This is the model that takes the correct data input
 
-BUCKET_NAME='drought-modelling-models'
-DATA_BUCKET_NAME = 'drought-modelling-datasets'
-BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
-BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+
 
 class DeepLearning2():
     
     def __init__(self):
-        self.train_data = None
-        self.test_data = None
+        self.train_data = DataFunctions().light_weekly_aggregate_train()
+        self.test_data = DataFunctions().light_weekly_aggregate_test()
         self.features = self.train_data.drop(columns=['fips_','year_','week_num_','score_max']).columns
-        
-    def get_data(self, local=True):
-        if local:
-            self.train_data = DataFunctions().light_weekly_aggregate_train()
-            self.test_data = DataFunctions().light_weekly_aggregate_test()
-        else:
-            self.train_data = f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}"
-            self.test_data = f"gs://{DATA_BUCKET_NAME}/{BUCKET_TEST_DATA_PATH}"
     
     #Data Scaling: Train and Test
     def robust(self):
@@ -109,5 +99,4 @@ class DeepLearning2():
         
 if __name__ == '__main__':
     my_test = DeepLearning2()
-    my_test.get_data(local=False)
     my_test.train_evaluate_model()
