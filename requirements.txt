@@ -9,7 +9,7 @@ numpy
 pandas
 scikit-learn
 geopandas 
-tensorflow
+tensorflow>=2.3.0
 joblib
 
 # tests/linter
