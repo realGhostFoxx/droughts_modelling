@@ -13,6 +13,8 @@ app.add_middleware(
 
 @app.get("/")
 def index():
+    
+    
     return {"greeting": "Hello world"}
 
 @app.get("/predict")
