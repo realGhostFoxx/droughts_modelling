@@ -89,7 +89,7 @@ class LSTM():
         local_model_name = 'model.h5'
         
         MODEL_NAME = 'model_trial'
-        MODEL_VERSION = '3'
+        MODEL_VERSION = 'LSTM_1'
         
         client = storage.Client().bucket(BUCKET_NAME)
         storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{local_model_name}"

@@ -38,6 +38,10 @@ class DeepLearning3():
         
 if __name__ == '__main__':
     my_test = DeepLearning3()
+    print('class instantiated')
     my_test.train_evaluate_model()
-        
-        
+    print('model trained')
+    my_test.save_model_locally()
+    print('saved locally')
+    my_test.save_model_to_gcp()
+    print('saved GCP')        
