@@ -23,74 +23,35 @@ class DataFunctions():
         full_path_test = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'test_timeseries.csv')
         full_path_fips = os.path.join(file_path,'realGhostFoxx','droughts_modelling', 'raw_data', 'fips_dict.csv')
         
+        BUCKET_NAME='drought-modelling-models'
+        DATA_BUCKET_NAME = 'drought-modelling-datasets'
+        BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
+        BUCKET_MICRO_TRAIN_DATA_PATH = 'data/micro_2.csv'
+        BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
+        BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+        BUCKET_FIPS_PATH = 'data/fips_dict.csv'
+        
         if local:
             self.train_data = pd.read_csv(full_path_train)[2:]
             self.validation_data = pd.read_csv(full_path_validate)[1:]
             self.test_data = pd.read_csv(full_path_test)[6:]
             self.fips_dict = pd.read_csv(full_path_fips,index_col=[0])
         else:
-            self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}")
+            self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_MICRO_TRAIN_DATA_PATH}")
+            # self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}")
             self.validation_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_VAL_DATA_PATH}")
             self.test_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TEST_DATA_PATH}")
             self.fips_dict = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_FIPS_PATH}")
-            
-    
-    def train_last_2_years(self):
-        df = self.train_data
-        df['date'] = pd.to_datetime(df['date'])
-        temp_df = df[df['date'] >= '2015-01-01']
-    
-        return temp_df
-
-    # def weekly_aggregate(self):
-    #     df = self.train_data
-        
-    #     #first create new features: month, weekday, weeknum
-    #     df['year'] = pd.to_datetime(df['date']).dt.isocalendar().year
-    #     df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
-        
-    #     #then encode the score as a new feature - not sure if we'll need it 
-    #     df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
-
-    #     #then start aggregating by fips, month, week_num
-    #     aggregated_data_train = df.groupby(['fips','year','week_num']).agg(
-    #                                     {'PRECTOT': ['min', 'mean', 'std'],
-    #                                     'PS': ['min', 'mean', 'std'],
-    #                                     'QV2M': ['min', 'mean', 'std'],
-    #                                     'T2M': ['min', 'mean', 'std'],
-    #                                     'T2MDEW': ['min', 'mean', 'std'],
-    #                                     'T2MWET': ['min', 'mean', 'std'],
-    #                                     'T2M_MAX': ['min', 'mean', 'std'],
-    #                                     'T2M_MIN': ['min', 'mean', 'std'],
-    #                                     'T2M_RANGE': ['min', 'mean', 'std'],
-    #                                      'TS': ['min', 'mean', 'std'],
-    #                                      'WS10M': ['min', 'mean', 'std'],
-    #                                      'WS10M_MAX': ['min', 'mean', 'std'],
-    #                                      'WS10M_MIN': ['min', 'mean', 'std'],
-    #                                      'WS10M_RANGE': ['min', 'mean', 'std'],
-    #                                      'WS50M': ['min', 'mean', 'std'],
-    #                                      'WS50M_MAX': ['min', 'mean', 'std'],
-    #                                      'WS50M_MIN': ['min', 'mean', 'std'],
-    #                                      'WS50M_RANGE': ['min', 'mean', 'std'],
-    #                                      'score': 'max'}).reset_index().sort_values(['fips','year','week_num'])
-
-    #     #finally, remove the multiindex from aggregated data_train so it looks neat and has flat column name structure
-    #     #Then round scores to nearest integer
-    #     aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
-    #     aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
-        
-    #     return aggregated_data_train.dropna()
-    
+ 
     def light_weekly_aggregate_train(self, scope='all'):
         
         if scope != 'all':
-            df = self.train_data[self.train_data['fips'] == 1001]
+            df = self.train_data[self.train_data['fips'].isin([1001, 1003, 1005, 1015])]
         else:
             df = self.train_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
-
+        df['week_num'] = pd.to_datetime(df['date']).dt.week
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
         aggregated_data_train = df.groupby(['fips','year','week_num']).agg(
@@ -119,11 +80,15 @@ class DataFunctions():
         aggregated_data_train['sin_week'] = np.sin(2*np.pi*aggregated_data_train['week_num_']/52)
         aggregated_data_train['cos_week'] = np.cos(2*np.pi*aggregated_data_train['week_num_']/52)
         
-        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME','STATE','geom']).rename(columns={'fips':'fips_'})
+        aggregated_data_train['sin_week'] = np.sin(2*np.pi*aggregated_data_train.week_num_/52)
+        aggregated_data_train['cos_week'] = np.cos(2*np.pi*aggregated_data_train.week_num_/52)
+        
+        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
         fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
         fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
+        
         aggregated_data_train = pd.merge(aggregated_data_train,fips_dict, on=["fips_"], how="inner")
         aggregated_data_train = aggregated_data_train[['fips_','year_','week_num_','sin_week','cos_week', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
@@ -137,7 +102,7 @@ class DataFunctions():
     def light_weekly_aggregate_validate(self, scope='all'):
         
         if scope != 'all':
-            df = self.validation_data[self.validation_data['fips'] == 1001]
+            df = self.train_data[self.train_data['fips'].isin([1001, 1003, 1005, 1015])]
         else:
             df = self.validation_data
    
@@ -169,6 +134,8 @@ class DataFunctions():
 
         aggregated_data_validate.columns = ['_'.join(col) for col in aggregated_data_validate.columns.values]
         aggregated_data_validate['score_max'] = aggregated_data_validate['score_max'].map(lambda x: np.round(x))
+       
+        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         aggregated_data_validate['sin_week'] = np.sin(2*np.pi*aggregated_data_validate['week_num_']/52)
         aggregated_data_validate['cos_week'] = np.cos(2*np.pi*aggregated_data_validate['week_num_']/52)
     
@@ -177,6 +144,7 @@ class DataFunctions():
         fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
         fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
+        
         aggregated_data_validate = pd.merge(aggregated_data_validate,fips_dict, on=["fips_"], how="inner")
         aggregated_data_validate = aggregated_data_validate[['fips_','year_','week_num_','sin_week','cos_week', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
@@ -189,7 +157,7 @@ class DataFunctions():
     def light_weekly_aggregate_test(self, scope='all'):
         
         if scope != 'all':
-            df = self.test_data[self.test_data['fips'] == 1001]
+            df = self.train_data[self.train_data['fips'].isin([1001, 1003, 1005, 1015])]
         else:
             df = self.test_data
    
@@ -224,11 +192,15 @@ class DataFunctions():
         aggregated_data_test['sin_week'] = np.sin(2*np.pi*aggregated_data_test['week_num_']/52)
         aggregated_data_test['cos_week'] = np.cos(2*np.pi*aggregated_data_test['week_num_']/52)
         
+        aggregated_data_test['sin_week'] = np.sin(2*np.pi*aggregated_data_test.week_num_/52)
+        aggregated_data_test['cos_week'] = np.cos(2*np.pi*aggregated_data_test.week_num_/52)
+        
         fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
         fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
         fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
+        
         aggregated_data_test = pd.merge(aggregated_data_test,fips_dict, on=["fips_"], how="inner")
         aggregated_data_test = aggregated_data_test[['fips_','year_','week_num_','sin_week','cos_week','PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
@@ -262,22 +234,4 @@ class DataFunctions():
             .sort_values('Feature Importance', ascending=False).iloc[:20]
             
         return [i for i in features_df.features][:5]
-            
-    def return_lagged_function(self, weeks_back=5):
-        
-        df = self.light_weekly_aggregate_train(scope='all')
-        
-        top_features = ['T2M_RANGE_mean', 'PS_mean', 'T2M_MAX_mean', 'TS_mean', 
-                        'T2MDEW_mean', 'QV2M_mean', 'WS10M_MAX_mean', 'PRECTOT_mean']
-        
-        all_features = [i for i in df.columns if i in top_features or i in ['fips_', 'year_', 'week_num_']]
-        
-        df_processed = df[all_features]
-        
-        for e in top_features:
-            for i in range(1, weeks_back):
-                df_processed[f'{e} - {i}'] = df_processed.groupby(['fips_'])[f'{e}'].shift(i)
-                
     
-       #return df_processed 
-

@@ -92,14 +92,15 @@ run_locally:
 
 #Variables for cloud training command
 
-BUCKET_NAME=drought-modelling-models
-BUCKET_TRAINING_FOLDER=models
+BUCKET_NAME=drought-modelling-datasets
+BUCKET_TRAINING_FOLDER=training
 REGION=europe-west2
 PYTHON_VERSION=3.7
 FRAMEWORK=tensorflow
 RUNTIME_VERSION=2.5
 PACKAGE_NAME=droughts_modelling
 FILENAME=updated_DL_2
+FILENAME_micro=updated_DL_2_model_2
 JOB_NAME=droughts_modelling_training$(shell date +'%Y%m%d_%H%M%S')
 
 gcp_submit_training:
@@ -112,6 +113,15 @@ gcp_submit_training:
 		--region ${REGION} \
 		--stream-logs
 
+gcp_submit__micro_training:
+	gcloud ai-platform jobs submit training ${JOB_NAME} \
+		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
+		--package-path ${PACKAGE_NAME} \
+		--module-name ${PACKAGE_NAME}.${FILENAME_micro} \
+		--python-version=${PYTHON_VERSION} \
+		--runtime-version=${RUNTIME_VERSION} \
+		--region ${REGION} \
+		--stream-logs
 
 run_api:
 	uvicorn api.fast:app --reload

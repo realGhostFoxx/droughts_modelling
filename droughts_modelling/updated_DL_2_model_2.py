@@ -72,7 +72,7 @@ class DeepLearning2():
         self.test_metawindow = fip_splitter(test_df)
 
     #Model + evaluation
-    def initialize_model(self,breg=tf.keras.regularizers.l1_l2(l1=0, l2=0.01), kreg=tf.keras.regularizers.l1_l2(l1=0, l2=0.01):
+    def initialize_model(self,breg=tf.keras.regularizers.l1_l2(l1=0, l2=0.01), kreg=tf.keras.regularizers.l1_l2(l1=0, l2=0.01)):
             self.model = models.Sequential()
             self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=None,kernel_regularizer=None))
             self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=None,kernel_regularizer=None))
@@ -106,7 +106,7 @@ class DeepLearning2():
         local_model_name = 'model.h5'
         
         MODEL_NAME = 'model_trial'
-        MODEL_VERSION = '3'
+        MODEL_VERSION = '4_new'
         
         client = storage.Client().bucket(BUCKET_NAME)
         storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{local_model_name}"
