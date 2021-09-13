@@ -37,7 +37,7 @@ class DataFunctions():
             self.test_data = pd.read_csv(full_path_test)[6:]
             self.fips_dict = pd.read_csv(full_path_fips,index_col=[0])
         else:
-            self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_MICRO_TRAIN_DATA_PATH}")
+            self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}")
             # self.train_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}")
             self.validation_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_VAL_DATA_PATH}")
             self.test_data = pd.read_csv(f"gs://{DATA_BUCKET_NAME}/{BUCKET_TEST_DATA_PATH}")
