@@ -100,7 +100,7 @@ FRAMEWORK=tensorflow
 RUNTIME_VERSION=2.5
 PACKAGE_NAME=droughts_modelling
 FILENAME=updated_DL_2
-FILENAME_micro=updated_DL_2_model_2
+FILENAME_micro=LSTM
 JOB_NAME=droughts_modelling_training$(shell date +'%Y%m%d_%H%M%S')
 
 gcp_submit_training:

@@ -6,12 +6,12 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.tree import DecisionTreeClassifier
 import ast
 
-BUCKET_NAME='drought-modelling-models'
-DATA_BUCKET_NAME = 'drought-modelling-datasets'
-BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
-BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
-BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
-BUCKET_FIPS_PATH = 'data/fips_dict.csv'
+# BUCKET_NAME='drought-modelling-models'
+# DATA_BUCKET_NAME = 'drought-modelling-datasets'
+# BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
+# BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
+# BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+# BUCKET_FIPS_PATH = 'data/fips_dict.csv'
 
 class DataFunctions():
     
@@ -26,7 +26,7 @@ class DataFunctions():
         BUCKET_NAME='drought-modelling-models'
         DATA_BUCKET_NAME = 'drought-modelling-datasets'
         BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
-        BUCKET_MICRO_TRAIN_DATA_PATH = 'data/micro_2.csv'
+        BUCKET_MICRO_TRAIN_DATA_PATH = 'data/micro_train.csv'
         BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
         BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
         BUCKET_FIPS_PATH = 'data/fips_dict.csv'
@@ -77,11 +77,9 @@ class DataFunctions():
 
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
+        
         aggregated_data_train['sin_week'] = np.sin(2*np.pi*aggregated_data_train['week_num_']/52)
         aggregated_data_train['cos_week'] = np.cos(2*np.pi*aggregated_data_train['week_num_']/52)
-        
-        aggregated_data_train['sin_week'] = np.sin(2*np.pi*aggregated_data_train.week_num_/52)
-        aggregated_data_train['cos_week'] = np.cos(2*np.pi*aggregated_data_train.week_num_/52)
         
         fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
@@ -135,7 +133,6 @@ class DataFunctions():
         aggregated_data_validate.columns = ['_'.join(col) for col in aggregated_data_validate.columns.values]
         aggregated_data_validate['score_max'] = aggregated_data_validate['score_max'].map(lambda x: np.round(x))
        
-        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         aggregated_data_validate['sin_week'] = np.sin(2*np.pi*aggregated_data_validate['week_num_']/52)
         aggregated_data_validate['cos_week'] = np.cos(2*np.pi*aggregated_data_validate['week_num_']/52)
     
@@ -189,12 +186,10 @@ class DataFunctions():
 
         aggregated_data_test.columns = ['_'.join(col) for col in aggregated_data_test.columns.values]
         aggregated_data_test['score_max'] = aggregated_data_test['score_max'].map(lambda x: np.round(x))
+        
         aggregated_data_test['sin_week'] = np.sin(2*np.pi*aggregated_data_test['week_num_']/52)
         aggregated_data_test['cos_week'] = np.cos(2*np.pi*aggregated_data_test['week_num_']/52)
-        
-        aggregated_data_test['sin_week'] = np.sin(2*np.pi*aggregated_data_test.week_num_/52)
-        aggregated_data_test['cos_week'] = np.cos(2*np.pi*aggregated_data_test.week_num_/52)
-        
+                
         fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
         fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
