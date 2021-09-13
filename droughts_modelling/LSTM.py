@@ -102,7 +102,6 @@ class LSTM():
 if __name__ == '__main__':
     my_test = LSTM(breg=l1_l2(l1=0.00, l2=0.00),kreg=l1_l2(l1=0, l2=0.02))
     my_test.train_model()
-    my_test.train_evaluate_model()
     print('model trained')
     my_test.save_model_locally()
     print('saved locally')
