@@ -125,3 +125,6 @@ gcp_submit__micro_training:
 
 run_api:
 	uvicorn api.fast:app --reload
+
+run_streamlit:
+	streamlit run app.py
