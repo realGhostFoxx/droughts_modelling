@@ -1,15 +1,15 @@
 from sklearn.preprocessing import OneHotEncoder
+from tensorflow import keras
 from tensorflow.keras import models,layers
 from sklearn.preprocessing import OneHotEncoder
 from droughts_modelling.data import DataFunctions
 from droughts_modelling.window_gen import WindowGenerator
-import joblib
+from datetime import datetime
 import numpy as np
 import pandas as pd
+from google.cloud import storage
 
 #This is the model that takes the correct data input
-
-
 
 class DeepLearning2():
     
@@ -83,20 +83,38 @@ class DeepLearning2():
         self.initialize_model()
         self.window()
         self.model.fit(self.train_metawindow,epochs=1,batch_size=32,verbose=0)
-        save_model_to_gcp()
-        self.model.evaluate(self.test_metawindow,verbose=0)
+        # self.save_model_to_gcp()
+        # self.model.evaluate(self.test_metawindow,verbose=0)
+        # return self.model
+    
+    def save_model_locally(self):
+        self.model.save('model.h5')
         
     def save_model_to_gcp(self):
-        # joblib.dump(local_model_name)
-        local_model_name = 'model.joblib'
-        joblib.dump(self.model, local_model_name)
-        print("saved model.joblib locally")
+        
+        BUCKET_NAME='drought-modelling-datasets'
+        # BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
+        # BUCKET_MICRO_TRAIN_DATA_PATH = 'data/micro_train.csv'
+        # BUCKET_VAL_DATA_PATH = 'data/validation_timeseries.csv'
+        # BUCKET_TEST_DATA_PATH = 'data/test_timeseries.csv'
+        # BUCKET_FIPS_PATH = 'data/fips_dict.csv'
+        
+        local_model_name = 'model.h5'
+        
+        MODEL_NAME = 'model_trial'
+        MODEL_VERSION = '3'
+        
         client = storage.Client().bucket(BUCKET_NAME)
-        storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{self.model}"
+        storage_location = f"models/{MODEL_NAME}/{MODEL_VERSION}/{local_model_name}"
         blob = client.blob(storage_location)
         blob.upload_from_filename(local_model_name)
-        print('saved_gcp')
-        
+
 if __name__ == '__main__':
     my_test = DeepLearning2()
+    print('class instantiated')
     my_test.train_evaluate_model()
+    print('model trained')
+    my_test.save_model_locally()
+    print('saved locally')
+    my_test.save_model_to_gcp()
+    print('saved GCP')
