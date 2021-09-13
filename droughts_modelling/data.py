@@ -6,7 +6,6 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.tree import DecisionTreeClassifier
 import ast
 
-
 BUCKET_NAME='drought-modelling-models'
 DATA_BUCKET_NAME = 'drought-modelling-datasets'
 BUCKET_TRAIN_DATA_PATH = 'data/train_timeseries.csv'
@@ -90,7 +89,7 @@ class DataFunctions():
             df = self.train_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.week
+        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
@@ -117,20 +116,23 @@ class DataFunctions():
 
         aggregated_data_train.columns = ['_'.join(col) for col in aggregated_data_train.columns.values]
         aggregated_data_train['score_max'] = aggregated_data_train['score_max'].map(lambda x: np.round(x))
+        aggregated_data_train['sin_week'] = np.sin(2*np.pi*aggregated_data_train['week_num_']/52)
+        aggregated_data_train['cos_week'] = np.cos(2*np.pi*aggregated_data_train['week_num_']/52)
         
-        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
+        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME','STATE','geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
-        fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
-        fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
+        fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
         aggregated_data_train = pd.merge(aggregated_data_train,fips_dict, on=["fips_"], how="inner")
-        aggregated_data_train = aggregated_data_train[['fips_', 'year_', 'week_num_', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
+        aggregated_data_train = aggregated_data_train[['fips_','year_','week_num_','sin_week','cos_week', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
        'T2M_MIN_mean', 'T2M_RANGE_mean', 'TS_mean', 'WS10M_mean',
        'WS10M_MAX_mean', 'WS10M_MIN_mean', 'WS10M_RANGE_mean', 'WS50M_mean',
-       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat', 'long','score_max']]
+       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat_rad', 'long_rad','score_max']]
 
         return aggregated_data_train.dropna()
+    
     
     def light_weekly_aggregate_validate(self, scope='all'):
         
@@ -140,7 +142,7 @@ class DataFunctions():
             df = self.validation_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.week
+        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
@@ -167,18 +169,20 @@ class DataFunctions():
 
         aggregated_data_validate.columns = ['_'.join(col) for col in aggregated_data_validate.columns.values]
         aggregated_data_validate['score_max'] = aggregated_data_validate['score_max'].map(lambda x: np.round(x))
-        
-        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
+        aggregated_data_validate['sin_week'] = np.sin(2*np.pi*aggregated_data_validate['week_num_']/52)
+        aggregated_data_validate['cos_week'] = np.cos(2*np.pi*aggregated_data_validate['week_num_']/52)
+    
+        fips_dict = self.fips_dict.drop(columns=['COUNTYNAME','STATE','geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
-        fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
-        fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
+        fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
         aggregated_data_validate = pd.merge(aggregated_data_validate,fips_dict, on=["fips_"], how="inner")
-        aggregated_data_validate = aggregated_data_validate[['fips_', 'year_', 'week_num_', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
+        aggregated_data_validate = aggregated_data_validate[['fips_','year_','week_num_','sin_week','cos_week', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
        'T2M_MIN_mean', 'T2M_RANGE_mean', 'TS_mean', 'WS10M_mean',
        'WS10M_MAX_mean', 'WS10M_MIN_mean', 'WS10M_RANGE_mean', 'WS50M_mean',
-       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat', 'long','score_max']]
+       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat_rad','long_rad','score_max']]
 
         return aggregated_data_validate.dropna()
 
@@ -190,7 +194,7 @@ class DataFunctions():
             df = self.test_data
    
         df['year'] = pd.to_datetime(df['date']).dt.year
-        df['week_num'] = pd.to_datetime(df['date']).dt.week
+        df['week_num'] = pd.to_datetime(df['date']).dt.isocalendar().week
 
         df['score_day'] = df['score'].apply(lambda x: 'yes' if pd.notnull(x) == True else '')
 
@@ -217,18 +221,20 @@ class DataFunctions():
 
         aggregated_data_test.columns = ['_'.join(col) for col in aggregated_data_test.columns.values]
         aggregated_data_test['score_max'] = aggregated_data_test['score_max'].map(lambda x: np.round(x))
+        aggregated_data_test['sin_week'] = np.sin(2*np.pi*aggregated_data_test['week_num_']/52)
+        aggregated_data_test['cos_week'] = np.cos(2*np.pi*aggregated_data_test['week_num_']/52)
         
         fips_dict = self.fips_dict.drop(columns=['COUNTYNAME',"STATE",'geom']).rename(columns={'fips':'fips_'})
         fips_dict["lat_long"] = fips_dict["lat_long"].transform(lambda x: ast.literal_eval(x))
-        fips_dict["lat"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0]
-        fips_dict["long"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1]
+        fips_dict["lat_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[0].map(lambda x: (x * np.pi)/180)
+        fips_dict["long_rad"] = pd.DataFrame(fips_dict["lat_long"].tolist())[1].map(lambda x: (x * np.pi)/180)
         fips_dict.drop(columns=["lat_long"],inplace=True)
         aggregated_data_test = pd.merge(aggregated_data_test,fips_dict, on=["fips_"], how="inner")
-        aggregated_data_test = aggregated_data_test[['fips_', 'year_', 'week_num_', 'PRECTOT_mean', 'PS_mean', 'QV2M_mean',
+        aggregated_data_test = aggregated_data_test[['fips_','year_','week_num_','sin_week','cos_week','PRECTOT_mean', 'PS_mean', 'QV2M_mean',
        'T2M_mean', 'T2MDEW_mean', 'T2MWET_mean', 'T2M_MAX_mean',
        'T2M_MIN_mean', 'T2M_RANGE_mean', 'TS_mean', 'WS10M_mean',
        'WS10M_MAX_mean', 'WS10M_MIN_mean', 'WS10M_RANGE_mean', 'WS50M_mean',
-       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat', 'long','score_max']]
+       'WS50M_MAX_mean', 'WS50M_MIN_mean', 'WS50M_RANGE_mean','lat_rad', 'long_rad','score_max']]
 
         return aggregated_data_test.dropna()
    
