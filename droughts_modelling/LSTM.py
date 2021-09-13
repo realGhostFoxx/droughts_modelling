@@ -10,9 +10,11 @@ from google.cloud import storage
 
 class LSTM():
     
-    def __init__(self):
-        train_data = DataFunctions().light_weekly_aggregate_train()
-        self.train_data = train_data[train_data['fips_']<= 5035] #Currently set up for first c.100 fips, just drop this line to train fully
+    def __init__(self, breg, kreg):
+        self.train_data = DataFunctions().light_weekly_aggregate_train()
+        self.breg = breg
+        self.kreg = kreg
+        #  self.train_data = train_data[train_data['fips_']<= 5035] #Currently set up for first c.100 fips, just drop this line to train fully
         self.features = self.train_data.drop(columns=['fips_','year_','week_num_','score_max']).columns
     
     #Data Scaling: Train and Test
@@ -58,18 +60,18 @@ class LSTM():
         self.train_metawindow = fip_splitter(train_df)
 
     #Model + evaluation
-    def initialize_model(self,breg,kreg):
+    def initialize_model(self):
         self.model = models.Sequential()
-        self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=breg,kernel_regularizer=kreg))
-        self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=breg,kernel_regularizer=kreg))
-        self.model.add(layers.LSTM(64,return_sequences=True,activation='tanh',bias_regularizer=breg,kernel_regularizer=kreg))
-        self.model.add(layers.LSTM(64,return_sequences=True,activation='tanh',bias_regularizer=breg,kernel_regularizer=kreg))
-        self.model.add(layers.LSTM(64,return_sequences=False,activation='tanh',bias_regularizer=breg,kernel_regularizer=kreg))
+        self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=self.breg,kernel_regularizer=self.kreg))
+        self.model.add(layers.LSTM(128,return_sequences=True,activation='tanh',bias_regularizer=self.breg,kernel_regularizer=self.kreg))
+        self.model.add(layers.LSTM(64,return_sequences=True,activation='tanh',bias_regularizer=self.breg,kernel_regularizer=self.kreg))
+        self.model.add(layers.LSTM(64,return_sequences=True,activation='tanh',bias_regularizer=self.breg,kernel_regularizer=self.kreg))
+        self.model.add(layers.LSTM(64,return_sequences=False,activation='tanh',bias_regularizer=self.breg,kernel_regularizer=self.kreg))
         self.model.add(layers.Dense(6*6,kernel_initializer=tensorflow.initializers.zeros(),activation='softmax'))
         self.model.add(layers.Reshape([6,6]))
         self.model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
         
-    def train_model(self,breg=None,kreg=None):
+    def train_model(self):
         self.initialize_model()
         self.window()
         self.model.fit(self.train_metawindow,epochs=50,batch_size=32,callbacks=EarlyStopping(monitor='accuracy',patience=10,restore_best_weights=True),verbose=1)
@@ -98,11 +100,12 @@ class LSTM():
         
 
 if __name__ == '__main__':
-    my_test = LSTM()
-    my_test.train_model(l1_l2(l1=0.00, l2=0.00),l1_l2(l1=0, l2=0.02)) 
+    my_test = LSTM(breg=l1_l2(l1=0.00, l2=0.00),kreg=l1_l2(l1=0, l2=0.02))
+    my_test.train_model()
     my_test.train_evaluate_model()
     print('model trained')
     my_test.save_model_locally()
     print('saved locally')
     my_test.save_model_to_gcp()
     print('saved GCP')
+    
