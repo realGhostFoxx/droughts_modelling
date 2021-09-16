@@ -20,8 +20,8 @@ class DataFunctions():
         file_path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
         full_path_train = os.path.join(file_path, 'code','realGhostFoxx','droughts_modelling', 'raw_data', 'train_timeseries.csv')
         full_path_validate = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'raw_data', 'validation_timeseries.csv')
-        full_path_test = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'raw_data', 'test_timeseries.csv')
-        full_path_fips = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'raw_data', 'fips_dict.csv')
+        full_path_test = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'data', 'test_timeseries.csv')
+        full_path_fips = os.path.join(file_path,'code','realGhostFoxx','droughts_modelling', 'data', 'fips_dict.csv')
         
         BUCKET_NAME='drought-modelling-models'
         DATA_BUCKET_NAME = 'drought-modelling-datasets'
